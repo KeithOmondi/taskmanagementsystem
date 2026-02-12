@@ -1,0 +1,24 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Dependency directories
+node_modules/
+
+# Build directory
+dist/
+
+# Environment variables (CRITICAL)
+.env
+.env.local
+.env.development.local
+
+# Database Seeders (Ignored regardless of subfolder)
+**/seeder.ts
+**/userSeeder.ts
+**/*Seeder.ts
+
+# OS Files
+.DS_Store
+Thumbs.db
