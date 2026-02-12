@@ -33,6 +33,7 @@ const envSchema = z.object({
   BREVO_API_KEY: z.string().min(1, "Brevo API Key is required"),
   MAIL_FROM_NAME: z.string().default("Mission Control"),
   MAIL_FROM_EMAIL: z.string().email("Invalid sender email"),
+  MAIL_CC_EMAIL: z.string().email(""),
 });
 
 // Parse and validate
