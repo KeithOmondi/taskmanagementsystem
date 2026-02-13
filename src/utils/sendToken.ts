@@ -40,7 +40,7 @@ export const sendToken = (
 
   const cookieOptions = {
     httpOnly: true,
-    secure: isProd,
+    secure: false,
     sameSite: isProd ? "none" as const : "lax" as const,
   };
 
