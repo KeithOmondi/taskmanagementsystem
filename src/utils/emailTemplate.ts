@@ -36,7 +36,7 @@ export const otpEmailTemplate = (otp: string): string => {
             If you did not request this, please contact support immediately.
           </p>
           <p style="color: #355E3B; font-size: 12px; font-weight: bold; margin-top: 5px;">
-            © ${new Date().getFullYear()} Your Company Name
+            © ${new Date().getFullYear()} office of the registrar high court
           </p>
         </div>
 

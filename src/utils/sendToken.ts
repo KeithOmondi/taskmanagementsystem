@@ -7,9 +7,6 @@ interface TokenPayload {
   role: string;
 }
 
-/* =====================================
-   Generate Tokens
-===================================== */
 const generateAccessToken = (payload: TokenPayload) => {
   const options: SignOptions = {
     expiresIn: env.JWT_ACCESS_EXPIRES as jwt.SignOptions["expiresIn"],
@@ -24,9 +21,6 @@ const generateRefreshToken = (payload: TokenPayload) => {
   return jwt.sign(payload, env.JWT_REFRESH_SECRET, options);
 };
 
-/* =====================================
-   Send Tokens via HTTP-Only Cookies
-===================================== */
 const sendToken = (
   res: Response,
   user: { _id: any; role: string },
@@ -43,21 +37,24 @@ const sendToken = (
 
   const isProduction = env.NODE_ENV === "production";
 
+  // 🔥 THE FIX FOR VERCEL + RENDER 🔥
   const cookieOptions = {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: "strict" as const,
+    // Secure must be true for SameSite: None to work
+    secure: true, 
+    // 'none' is required because Vercel and Render are on different domains
+    sameSite: isProduction ? ("none" as const) : ("lax" as const),
   };
 
   res
     .status(statusCode)
     .cookie("accessToken", accessToken, {
       ...cookieOptions,
-      maxAge: 15 * 60 * 1000, // 15 mins
+      maxAge: 15 * 60 * 1000, 
     })
     .cookie("refreshToken", refreshToken, {
       ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
     })
     .json({
       success: true,
