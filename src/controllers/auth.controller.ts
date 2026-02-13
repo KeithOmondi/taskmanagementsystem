@@ -116,58 +116,33 @@ export const verifyOtp = asyncHandler(async (req: Request, res: Response) => {
  * @route   POST /api/v1/auth/refresh
  */
 export const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
-  // 1. Safely extract the token from cookies
   const token = req.cookies?.refreshToken;
-  
-  // 2. 🟢 CRITICAL: Explicitly check for token existence.
-  // We return a 401 instead of throwing a generic error to ensure the 
-  // frontend knows exactly why the refresh failed.
+
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: "Session expired: No refresh token found"
+      message: "Session expired: No refresh token found",
     });
   }
 
   try {
-    // 3. Verify the token
-    // If jwt.verify fails (expired/tampered), it jumps straight to the catch block.
     const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET) as { id: string; role: string };
-    
-    // 4. Find the operative (user)
+
     const user = await User.findById(decoded.id);
-
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Operative not found in registry"
-      });
+      return res.status(401).json({ success: false, message: "User not found" });
     }
-
     if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: "Account access revoked (Disabled)"
-      });
+      return res.status(403).json({ success: false, message: "Account disabled" });
     }
 
-    // 5. 🟢 SUCCESS: Issue new Access and Refresh tokens
-    // This will use your updated 'sendToken' with sameSite: "none"
-    return sendToken(
-      res, 
-      { _id: user._id, role: user.role }, 
-      200, 
-      "Security credentials rotated successfully"
-    );
-
+    // Issue new tokens
+    return sendToken(res, { _id: user._id, role: user.role }, 200, "Tokens refreshed successfully");
   } catch (error: any) {
-    // 🟢 Catch-all for JWT errors (JsonWebTokenError, TokenExpiredError)
-    // Logging the error on the server helps you debug while the client gets a clean 401.
-    console.error("Refresh Token Error:", error.message);
-    
+    console.error("Refresh token error:", error.message);
     return res.status(401).json({
       success: false,
-      message: "Session invalid or expired. Please re-authenticate."
+      message: "Refresh token invalid or expired. Please login again.",
     });
   }
 });
@@ -176,19 +151,22 @@ export const refreshAccessToken = asyncHandler(async (req: Request, res: Respons
  * @desc    Logout User
  */
 export const logout = asyncHandler(async (_req: Request, res: Response) => {
-  const isProduction = env.NODE_ENV === "production";
-  
-  // 🟢 Options must match sendToken exactly to successfully clear cookies in prod
-  const cookieOptions = {
+  const isProd = env.NODE_ENV === "production";
+
+  const cookieOptions: import("express").CookieOptions = {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? ("none" as const) : ("lax" as const),
-    expires: new Date(0),
+    secure: isProd,                      // Must match the 'sendToken' secure option
+    sameSite: isProd ? ("none" as const) : ("lax" as const),
+    path: "/",                           // Must match 'sendToken' path
+    expires: new Date(0),                // Expire immediately
   };
 
   res
     .cookie("accessToken", "", cookieOptions)
     .cookie("refreshToken", "", cookieOptions)
     .status(200)
-    .json({ success: true, message: "Logged out successfully" });
+    .json({
+      success: true,
+      message: "Logged out successfully. Tokens cleared.",
+    });
 });

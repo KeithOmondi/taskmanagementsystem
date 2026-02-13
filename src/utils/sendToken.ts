@@ -38,11 +38,12 @@ export const sendToken = (
 
   const isProd = env.NODE_ENV === "production";
 
-  const cookieOptions = {
+  const cookieOptions: import("express").CookieOptions = {
     httpOnly: true,
     secure: isProd,
-    sameSite: (isProd ? "none" : "lax") as "none" | "lax", // ✅ cast to allowed literal type
+    sameSite: (isProd ? "none" : "lax") as "none" | "lax",
     path: "/",
+    domain: isProd ? ".vercel.app" : undefined,
   };
 
   res
