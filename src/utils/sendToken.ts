@@ -26,7 +26,7 @@ export const sendToken = (
   res: Response,
   user: { _id: any; role: string },
   statusCode = 200,
-  message = "Authentication successful",
+  message = "Authentication successful"
 ) => {
   const payload: TokenPayload = {
     id: user._id.toString(),
@@ -38,18 +38,11 @@ export const sendToken = (
 
   const isProd = env.NODE_ENV === "production";
 
-  const cookieOptions: {
-    httpOnly: boolean;
-    secure: boolean;
-    sameSite: "lax" | "strict" | "none";
-    path: string;
-    domain?: string;
-  } = {
+  const cookieOptions = {
     httpOnly: true,
-    secure: isProd, // must be true in prod for SameSite=None
-    sameSite: isProd ? "none" : "lax",
+    secure: isProd,
+    sameSite: (isProd ? "none" : "lax") as "none" | "lax", // ✅ cast to allowed literal type
     path: "/",
-    domain: isProd ? "taskmanagementsystem-9jlf.onrender.com" : undefined, // critical for cross-site cookies
   };
 
   res
