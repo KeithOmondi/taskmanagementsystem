@@ -1,25 +1,19 @@
-import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import multer from 'multer';
+import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const CloudinaryStorage = require("multer-storage-cloudinary"); // <-- do NOT destructure
 
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req, file) => {
-    return {
-      folder: 'task-attachments',
-      resource_type: 'auto',
-      // 'authenticated' ensures the raw URL returns 401/404 to the public
-      type: 'authenticated', 
-      allowed_formats: ['jpg', 'png', 'pdf', 'docx', 'xlsx'],
-      public_id: `${Date.now()}-${file.originalname.split('.')[0]}`,
-    };
-  },
+  cloudinary,
+  params: async (req: any, file: any) => ({
+    folder: "task-attachments",
+    resource_type: "auto",
+    type: "authenticated",
+    allowed_formats: ["jpg", "png", "pdf", "docx", "xlsx"],
+    public_id: `${Date.now()}-${file.originalname.split(".")[0]}`,
+  }),
 });
 
-export const upload = multer({ storage });
+export const upload = multer({
+  storage: storage as unknown as multer.StorageEngine,
+});
