@@ -113,29 +113,62 @@ export const verifyOtp = asyncHandler(async (req: Request, res: Response) => {
 
 /**
  * @desc    Refresh Access Token
+ * @route   POST /api/v1/auth/refresh
  */
 export const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
-  const token = req.cookies?.refreshToken; // Usually cleaner to use only cookies for refresh
+  // 1. Safely extract the token from cookies
+  const token = req.cookies?.refreshToken;
   
+  // 2. 🟢 CRITICAL: Explicitly check for token existence.
+  // We return a 401 instead of throwing a generic error to ensure the 
+  // frontend knows exactly why the refresh failed.
   if (!token) {
-    res.status(401);
-    throw new Error("No refresh token found");
+    return res.status(401).json({
+      success: false,
+      message: "Session expired: No refresh token found"
+    });
   }
 
   try {
-    // 🟢 Try/Catch prevents 500 crashes if token is malformed
+    // 3. Verify the token
+    // If jwt.verify fails (expired/tampered), it jumps straight to the catch block.
     const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET) as { id: string; role: string };
+    
+    // 4. Find the operative (user)
     const user = await User.findById(decoded.id);
 
-    if (!user || !user.isActive) {
-      res.status(401);
-      throw new Error("User session invalid");
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Operative not found in registry"
+      });
     }
 
-    return sendToken(res, { _id: user._id, role: user.role }, 200, "Token refreshed");
-  } catch (err) {
-    res.status(401);
-    throw new Error("Session expired or invalid");
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "Account access revoked (Disabled)"
+      });
+    }
+
+    // 5. 🟢 SUCCESS: Issue new Access and Refresh tokens
+    // This will use your updated 'sendToken' with sameSite: "none"
+    return sendToken(
+      res, 
+      { _id: user._id, role: user.role }, 
+      200, 
+      "Security credentials rotated successfully"
+    );
+
+  } catch (error: any) {
+    // 🟢 Catch-all for JWT errors (JsonWebTokenError, TokenExpiredError)
+    // Logging the error on the server helps you debug while the client gets a clean 401.
+    console.error("Refresh Token Error:", error.message);
+    
+    return res.status(401).json({
+      success: false,
+      message: "Session invalid or expired. Please re-authenticate."
+    });
   }
 });
 
