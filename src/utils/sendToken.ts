@@ -43,21 +43,14 @@ export const sendToken = (
     secure: boolean;
     sameSite: "lax" | "strict" | "none";
     path: string;
+    domain?: string;
   } = {
     httpOnly: true,
-    secure: isProd, // ✅ must be true in prod for SameSite=None
+    secure: isProd, // must be true in prod for SameSite=None
     sameSite: isProd ? "none" : "lax",
     path: "/",
+    domain: isProd ? "taskmanagementsystem-9jlf.onrender.com" : undefined, // critical for cross-site cookies
   };
-
-  // 🔹 DEBUG LOGS
-  console.log("===== sendToken DEBUG =====");
-  console.log("Environment:", env.NODE_ENV);
-  console.log("isProd:", isProd);
-  console.log("Access Token:", accessToken);
-  console.log("Refresh Token:", refreshToken);
-  console.log("Cookie Options:", cookieOptions);
-  console.log("===========================");
 
   res
     .status(statusCode)
