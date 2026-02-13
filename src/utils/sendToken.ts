@@ -38,10 +38,16 @@ export const sendToken = (
 
   const isProd = env.NODE_ENV === "production";
 
-  const cookieOptions = {
+  const cookieOptions: {
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite: "lax" | "strict" | "none";
+    path: string;
+  } = {
     httpOnly: true,
-    secure: false,
-    sameSite: isProd ? "none" as const : "lax" as const,
+    secure: isProd, // ✅ must be true in prod for SameSite=None
+    sameSite: isProd ? "none" : "lax",
+    path: "/",
   };
 
   // 🔹 DEBUG LOGS
@@ -57,11 +63,11 @@ export const sendToken = (
     .status(statusCode)
     .cookie("accessToken", accessToken, {
       ...cookieOptions,
-      maxAge: 15 * 60 * 1000,
+      maxAge: 15 * 60 * 1000, // 15 minutes
     })
     .cookie("refreshToken", refreshToken, {
       ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     })
     .json({
       success: true,
@@ -70,6 +76,5 @@ export const sendToken = (
       accessToken, // optional for SPA
     });
 };
-
 
 export default sendToken;
