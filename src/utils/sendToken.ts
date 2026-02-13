@@ -1,27 +1,28 @@
 import { Response } from "express";
 import jwt, { SignOptions } from "jsonwebtoken";
 import { env } from "../config/env";
+import type { StringValue } from "ms"; // ✅ import StringValue
 
 interface TokenPayload {
   id: string;
   role: string;
 }
 
-const generateAccessToken = (payload: TokenPayload) => {
+const generateAccessToken = (payload: TokenPayload): string => {
   const options: SignOptions = {
-    expiresIn: env.JWT_ACCESS_EXPIRES as jwt.SignOptions["expiresIn"],
+    expiresIn: env.JWT_ACCESS_EXPIRES as StringValue,
   };
-  return jwt.sign(payload, env.JWT_ACCESS_SECRET, options);
+  return jwt.sign(payload, env.JWT_ACCESS_SECRET as string, options);
 };
 
-const generateRefreshToken = (payload: TokenPayload) => {
+const generateRefreshToken = (payload: TokenPayload): string => {
   const options: SignOptions = {
-    expiresIn: env.JWT_REFRESH_EXPIRES as jwt.SignOptions["expiresIn"],
+    expiresIn: env.JWT_REFRESH_EXPIRES as StringValue,
   };
-  return jwt.sign(payload, env.JWT_REFRESH_SECRET, options);
+  return jwt.sign(payload, env.JWT_REFRESH_SECRET as string, options);
 };
 
-const sendToken = (
+export const sendToken = (
   res: Response,
   user: { _id: any; role: string },
   statusCode = 200,
@@ -35,32 +36,25 @@ const sendToken = (
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
-  const isProduction = env.NODE_ENV === "production";
+  const isProd = env.NODE_ENV === "production";
 
-  // 🔥 THE FIX FOR VERCEL + RENDER 🔥
   const cookieOptions = {
     httpOnly: true,
-    // Secure must be true for SameSite: None to work
-    secure: true, 
-    // 'none' is required because Vercel and Render are on different domains
-    sameSite: isProduction ? ("none" as const) : ("lax" as const),
+    secure: isProd,
+    sameSite: isProd ? ("none" as const) : ("lax" as const),
   };
 
   res
     .status(statusCode)
     .cookie("accessToken", accessToken, {
       ...cookieOptions,
-      maxAge: 15 * 60 * 1000, 
+      maxAge: 15 * 60 * 1000,
     })
     .cookie("refreshToken", refreshToken, {
       ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000, 
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     })
-    .json({
-      success: true,
-      message,
-      user: payload,
-    });
+    .json({ success: true, message, user: payload });
 };
 
 export default sendToken;
