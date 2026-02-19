@@ -21,6 +21,7 @@ import superAdminTaskRoutes from "./routes/superadmin.task.routes";
 import userRoutes from "./routes/user.routes";
 import categoriesRoutes from "./routes/category.routes";
 import auditRoutes from "./routes/audit.routes";
+import calendarRoutes from "./routes/calendar.routes"
 
 dotenv.config();
 
@@ -116,6 +117,7 @@ app.use("/api/v1/superadmin/tasks", superAdminTaskRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/audit", auditRoutes);
 app.use("/api/v1/categories", categoriesRoutes);
+app.use('/api/v1/calendar', calendarRoutes);
 
 /* ==========================================
    8. ERROR HANDLING

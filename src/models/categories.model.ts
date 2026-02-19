@@ -27,13 +27,25 @@ const categorySchema = new Schema<ICategory>(
 );
 
 categorySchema.pre("save", async function () {
-  if (this.isModified("name")) {
-    this.slug = this.name
+  if (this.isModified("name") || !this.slug) {
+    // Base slug
+    let baseSlug = this.name
       .toLowerCase()
       .trim()
-      .replace(/[^\w\s-]/g, "") 
-      .replace(/[\s_-]+/g, "-") 
-      .replace(/^-+|-+$/g, ""); 
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    let slug = baseSlug;
+    let count = 1;
+
+    // Check if slug already exists
+    while (await mongoose.models.Category.findOne({ slug })) {
+      slug = `${baseSlug}-${count}`;
+      count++;
+    }
+
+    this.slug = slug;
   }
 });
 

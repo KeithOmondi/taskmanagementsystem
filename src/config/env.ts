@@ -34,6 +34,12 @@ const envSchema = z.object({
   MAIL_FROM_NAME: z.string().default("Mission Control"),
   MAIL_FROM_EMAIL: z.string().email("Invalid sender email"),
   MAIL_CC_EMAIL: z.string().email(""),
+
+
+//Google Calendar
+GOOGLE_CLIENT_ID: z.string().min(1, "required"),
+GOOGLE_CLIENT_SECRET: z.string().min(1, "required"),
+GOOGLE_REDIRECT_URI: z.string().min(1, "required")
 });
 
 // Parse and validate
